@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量图片外链转HTML工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS变量定义 */
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-dark: #3a0ca3;
+            --secondary: #7209b7;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --danger: #f94144;
+            --dark: #212529;
+            --secondary-dark: #495057;
+            --light: #f8f9fa;
+            --border: #dee2e6;
+            --radius: 12px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+            flex: 1;
+        }
+
+        /* 头部样式 */
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding: 2rem 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 主内容区域 */
+        main {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            background-color: #fafafa;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* 标签页样式 */
+        .tabs {
+            display: flex;
+            background-color: #fafafa;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .tabs::-webkit-scrollbar-thumb {
+            background-color: var(--border);
+            border-radius: 2px;
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--secondary-dark);
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background-color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 表单元素样式 */
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: white;
+            font-family: inherit;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-row > div {
+            flex: 1;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            font-size: 0.95rem;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            gap: 0.5rem;
+        }
+
+        .btn i {
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #43bccd;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #d90479;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #e03131;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-dark);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-light {
+            background-color: #e9ecef;
+            color: var(--dark);
+        }
+
+        .btn-light:hover {
+            background-color: #dee2e6;
+            transform: translateY(-1px);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* 单选和复选框样式 */
+        .radio-group, .checkbox-group {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-label, .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 400;
+            gap: 0.5rem;
+        }
+
+        .radio-label input, .checkbox-label input {
+            margin: 0;
+            accent-color: var(--primary);
+            width: auto;
+            height: 1.1rem;
+            width: 1.1rem;
+        }
+
+        /* 网格布局 */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-cols-1 { grid-template-columns: 1fr; }
+        
+        @media (min-width: 768px) {
+            .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* 预览区域样式 */
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .preview-item {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            background-color: white;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-item:hover {
+            box-shadow: 0 6px 16px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .preview-img {
+            aspect-ratio: 4/3;
+            width: 100%;
+            object-fit: contain;
+            background-color: #f8fafc;
+            transition: var(--transition);
+        }
+
+        .preview-img:hover {
+            transform: scale(1.02);
+        }
+
+        .preview-caption {
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--secondary-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background-color: #fafafa;
+            border-top: 1px solid var(--border);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            transform: scale(0.95);
+            transition: var(--transition);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary-dark);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .close-btn:hover {
+            background-color: #f8f9fa;
+            color: var(--dark);
+        }
+
+        /* 通知样式 */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            background-color: white;
+            color: var(--dark);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            max-width: 350px;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .notification i {
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .notification.success {
+            background-color: #f0fdf4;
+            color: #166534;
+            border-left-color: #22c55e;
+        }
+
+        .notification.error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border-left-color: #ef4444;
+        }
+
+        .notification.warning {
+            background-color: #fffbeb;
+            color: #92400e;
+            border-left-color: #f59e0b;
+        }
+
+        .notification.info {
+            background-color: #eff6ff;
+            color: #1e40af;
+            border-left-color: #3b82f6;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 工具类 */
+        .hidden { display: none; }
+        .text-center { text-align: center; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0.9;
+            transition: var(--transition);
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        /* 页脚样式 */
+        footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 2rem;
+            color: var(--secondary-dark);
+            font-size: 0.95rem;
+        }
+
+        footer p {
+            margin: 0;
+        }
+        
+        /* 页脚链接样式 */
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 0.25rem 0;
+            transition: var(--transition);
+        }
+        
+        footer a:hover {
+            color: var(--primary-dark);
+        }
+        
+        footer a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--primary);
+            transition: var(--transition);
+        }
+        
+        footer a:hover::after {
+            width: 100%;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            header {
+                padding: 1.5rem;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .btn-group {
+                gap: 0.5rem;
+            }
+            
+            .btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+            
+            .radio-group, .checkbox-group {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .notification {
+                right: 1rem;
+                left: 1rem;
+                max-width: none;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>图片外链转标签工具</h1>
+            <p>快速将多个图片链接转换为HTML标签代码，支持批量处理、格式定制和图片预览</p>
+        </header>
+
+        <main>
+            <!-- 标签页导航 -->
+            <div class="tabs">
+                <div class="tab active" data-tab="input">
+                    <i class="fas fa-link"></i>输入链接
+                </div>
+                <div class="tab" data-tab="settings">
+                    <i class="fas fa-cog"></i>生成设置
+                </div>
+                <div class="tab" data-tab="replace">
+                    <i class="fas fa-exchange-alt"></i>批量替换
+                </div>
+            </div>
+            
+            <!-- 输入区域 -->
+            <div class="tab-content active" id="input-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>输入图片链接</h2>
+                        <button id="importBtn" class="btn btn-light btn-sm">
+                            <i class="fas fa-file-import"></i>导入TXT
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <textarea id="inputLinks" placeholder="粘贴多个图片链接，格式不限，系统将自动识别和整理..."></textarea>
+                        <input type="file" id="fileInput" accept=".txt" class="hidden">
+                        
+                        <div class="btn-group" style="margin-top: 1rem;">
+                            <button id="formatBtn" class="btn btn-primary">
+                                <i class="fas fa-magic"></i>自动整理
+                            </button>
+                            <button id="extractBtn" class="btn btn-success">
+                                <i class="fas fa-filter"></i>智能提取链接
+                            </button>
+                            <button id="deduplicateBtn" class="btn btn-warning">
+                                <i class="fas fa-broom"></i>去除重复
+                            </button>
+                            <button id="clearBtn" class="btn btn-danger">
+                                <i class="fas fa-trash-alt"></i>清空
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设置区域 -->
+            <div class="tab-content" id="settings-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>HTML生成设置</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <!-- 左侧：基本设置 -->
+                            <div>
+                                <div class="form-group">
+                                    <label>输出格式</label>
+                                    <div class="radio-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="outputFormat" value="multiline" checked>
+                                            <span>每行一个标签</span>
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="outputFormat" value="compact">
+                                            <span>紧凑排列</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>分隔符</label>
+                                    <div class="radio-group">
+                                        <label class="radio-label">
+                                            <input type="radio" name="separator" value="newline" checked>
+                                            <span>换行符</span>
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="separator" value="comma">
+                                            <span>逗号</span>
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="separator" value="space">
+                                            <span>空格</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="responsiveCheck">
+                                        <span>添加响应式样式</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- 右侧：属性设置 -->
+                            <div>
+                                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">全局属性设置</h3>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="classAttr">CSS类名</label>
+                                        <input type="text" id="classAttr" placeholder="例如: img-fluid">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="altAttr">Alt文本</label>
+                                        <input type="text" id="altAttr" placeholder="例如: 图片{n}">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="widthAttr">宽度</label>
+                                        <input type="text" id="widthAttr" placeholder="例如: 300px 或 100%">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="heightAttr">高度</label>
+                                        <input type="text" id="heightAttr" placeholder="例如: 200px 或 auto">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="customAttr">自定义属性</label>
+                                    <input type="text" id="customAttr" placeholder='例如: loading="lazy" decoding="async"'>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 批量替换区域 -->
+            <div class="tab-content" id="replace-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>批量替换</h2>
+                        <button id="applyReplaceBtn" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-sync-alt"></i>应用替换
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="findText">查找文本</label>
+                                <input type="text" id="findText" placeholder="例如: old-domain.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="replaceText">替换为</label>
+                                <input type="text" id="replaceText" placeholder="例如: new-domain.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 生成结果和预览标签栏 -->
+            <div class="tabs" style="margin-top: 1.5rem;">
+                <div class="tab active" data-tab="output">
+                    <i class="fas fa-code"></i>生成结果
+                </div>
+                <div class="tab" data-tab="preview">
+                    <i class="fas fa-images"></i>图片预览
+                </div>
+            </div>
+            
+            <!-- 生成结果区域 -->
+            <div class="tab-content active" id="output-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>HTML代码</h2>
+                        <div class="btn-group">
+                            <button id="generateBtn" class="btn btn-primary">
+                                <i class="fas fa-code"></i>生成HTML代码
+                            </button>
+                            <button id="exportBtn" class="btn btn-success">
+                                <i class="fas fa-file-export"></i>导出
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="relative">
+                            <textarea id="outputCode" readonly></textarea>
+                            <button id="copyBtn" class="copy-btn">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 图片预览区域 -->
+            <div class="tab-content" id="preview-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>图片预览</h2>
+                        <div class="btn-group">
+                            <button id="checkLinksBtn" class="btn btn-warning btn-sm">
+                                <i class="fas fa-link-slash"></i>检查无效链接
+                            </button>
+                            <button id="togglePreviewBtn" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-list"></i>切换视图
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="previewContainer" class="preview-grid">
+                            <!-- 预览图片将在这里动态生成 -->
+                            <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
+                                <i class="fas fa-images" style="font-size: 3rem; color: #dee2e6; margin-bottom: 1rem;"></i>
+                                <p style="color: var(--secondary-dark);">生成HTML代码后将显示图片预览</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>批量图片外链转HTML工具 &copy; 2025 <a href="https://www.mancs.cn/" target="_blank">漫川能量站</a> | 高效、简洁的图片链接处理解决方案 </p>
+        </footer>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">导出选项</h3>
+                <button id="closeModal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="modal-body">
+                <!-- 动态内容 -->
+            </div>
+            <div class="modal-footer">
+                <button id="modalCancelBtn" class="btn btn-light">取消</button>
+                <button id="modalConfirmBtn" class="btn btn-primary">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./app.js"></script>
+</body>
+</html>
